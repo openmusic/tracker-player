@@ -1,5 +1,5 @@
 // TODO many things don't need to be 'public' as for example eventsList
-var EventDispatcher = require('./libs/EventDispatcher');
+var EventDispatcher = require('eventdispatcher.js');
 var Pattern = require('./Pattern');
 var MIDIUtils = require('MIDIUtils');
 

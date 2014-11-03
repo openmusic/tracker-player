@@ -19,5 +19,12 @@
   "bugs": {
     "url": "https://github.com/openmusic/tracker-player/issues"
   },
-  "homepage": "https://github.com/openmusic/tracker-player"
+  "homepage": "https://github.com/openmusic/tracker-player",
+  "dependencies": {
+    "eventdispatcher.js": "0.0.2",
+    "gulp": "^3.8.9",
+    "midiutils": "0.0.4",
+    "openmusic-demo-gulp-tasks": "^1.2.0",
+    "stringformat.js": "0.0.3"
+  }
 }
