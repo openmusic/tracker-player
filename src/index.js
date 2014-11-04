@@ -348,16 +348,13 @@ module.exports = function() {
 			evTime;
 		
 		if(this.finished && this.repeat) {
-			console.error('hay que resetear');
 			this.jumpToOrder(0, 0);
 			this.finished = false;
-			console.error('ahora', this.nextEventPosition);
 		}
 
 		if(this.nextEventPosition >= this.eventsList.length) {
 			this.finished = true;
 			loopStart = absTime;
-			console.error('FINISHED', 'new loop start', loopStart);
 			return;
 		}
 
@@ -372,14 +369,13 @@ module.exports = function() {
 
 			// Not scheduling things we left behind
 			if(evTime >= relTime) {
+				
 				if(ev.type === EVENT_ORDER_CHANGE) {
 
-					console.log('change to order', ev.order);
 					changeToOrder(ev.order);
 
 				} else if(ev.type === EVENT_ROW_CHANGE) {
 
-					console.log('change to row ', ev.row);
 					changeToRow(ev.row);
 
 				} else if(ev.type === EVENT_NOTE_ON ) {
@@ -431,6 +427,7 @@ module.exports = function() {
 		loopStart = _startTime;
 	};
 
+	// TODO needs review
 	this.stop = function() {
 		loopStart = 0;
 		that.jumpToOrder(0, 0);
@@ -440,6 +437,7 @@ module.exports = function() {
 		return _isPlaying;
 	};
 
+	// TODO needs review
 	this.pause = function() {
 		_isPlaying = false;
 		clearTimeout(frameUpdateId);
