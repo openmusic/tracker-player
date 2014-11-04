@@ -435,47 +435,105 @@ module.exports = function() {
 			orderIndex++;
 		}
 
-		// TMP
-		/*that.eventsList.forEach(function(ev, idx) {
+	};
+
+	this.debugEventsList = function() {
+		this.eventsList.forEach(function(ev, idx) {
 			console.log(idx, ev.timestamp, ev.type, ev.order, ev.pattern, ev.row);
-		});*/
+		});
+	};
+
+	this.processEvents = function(absTime, sliceLength) {
+
+		var relTime = absTime - loopStart,
+			sliceEnd = relTime + sliceLength,
+			ev,
+			evTime;
+		
+		if(this.finished && this.repeat) {
+			console.error('hay que resetear');
+			this.jumpToOrder(0, 0);
+			this.finished = false;
+			console.error('ahora', this.nextEventPosition);
+		}
+
+		if(this.nextEventPosition >= this.eventsList.length) {
+			this.finished = true;
+			loopStart = absTime;
+			console.error('FINISHED', 'new loop start', loopStart);
+			return;
+		}
+
+		do {
+
+			ev = this.eventsList[this.nextEventPosition];
+			evTime = ev.timestamp;
+			
+			if(evTime > sliceEnd) {
+				break;
+			}
+
+			// Not scheduling things we left behind
+			if(evTime >= relTime) {
+				if(ev.type === EVENT_ORDER_CHANGE) {
+					console.log('change to order', ev.order);
+					changeToOrder(ev.order);
+				} else if(ev.type === EVENT_ROW_CHANGE) {
+					console.log('change to row ', ev.row);
+					changeToRow(ev.row);
+				}
+			}
+
+			this.nextEventPosition++;
+
+		} while(this.nextEventPosition < this.eventsList.length);
 
 	};
 
 	// what used to be updateFrame, but not as-internal
-	this.processEvents = function(time, sliceLength) {
-		var out = 'process ' + time + ' ' + sliceLength;
-
-		/* MISSING? */
+	this.processEvents2 = function(time, sliceLength) {
+		var out = 'process ' + time + ' ' + sliceLength + '\n';
 		var currentEvent,
 			currentEventStart,
+			absTime = time - loopStart,
 			frameEnd = time + sliceLength;
 
+		out += 'absTime ' + absTime + '\n';
+	
 		if(this.finished && this.repeat) {
+			console.error('hay que resetear');
 			this.jumpToOrder(0, 0);
 			this.finished = false;
+			console.error('ahora', this.nextEventPosition);
 		}
 
-		if(this.nextEventPosition === this.eventsList.length) {
+		if(this.nextEventPosition >= this.eventsList.length) {
+			this.finished = true;
+			console.error('FINISHED');
 			return out;
 		}
 
 		do {
+
 			currentEvent = this.eventsList[this.nextEventPosition];
-			currentEventStart = loopStart + currentEvent.timestamp;
+			//currentEventStart = loopStart + currentEvent.timestamp;
+			currentEventStart = currentEvent.timestamp;
 
 			if(currentEventStart > frameEnd) {
 				break;
 			}
 
 			// Not scheduling things we left behind
-			if(currentEventStart >= time) {
+			if(currentEventStart >= absTime) {
 
 				if(currentEvent.type === EVENT_ORDER_CHANGE) {
+					out += 'change to order ' + currentEvent.order + '\n';
 					changeToOrder(currentEvent.order);
 				} else if(currentEvent.type === EVENT_ROW_CHANGE) {
+					out += 'change to row ' + currentEvent.row + '\n';
 					changeToRow(currentEvent.row);
 				} else if(currentEvent.type === EVENT_NOTE_ON) {
+					out += 'note on' + currentEvent.instrument + ' ' + currentEvent.noteNumber + '\n';
 					var voice = this.gear[currentEvent.instrument];
 					if(voice) {
 						setLastPlayedNote(currentEvent.noteNumber, currentEvent.track, currentEvent.column);

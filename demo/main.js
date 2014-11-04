@@ -62,7 +62,15 @@ var song = {
 							{ note: 'C-3', instrument: 1 },
 							{ note: 'A-3', instrument: 1 }
 						]
+					},
+					{
+						row: 8,
+						columns: [
+							{ note: 'D-3', instrument: 1 },
+							{ note: 'F-3', instrument: 1 }
+						]
 					}
+
 				]
 			]
 		}
@@ -72,6 +80,8 @@ var song = {
 player.loadSong(song);
 player.buildEvents();
 player.gear = [ new Trumpet(), new Sax() ];
+player.repeat = true;
+player.debugEventsList();
 
 // ~~~ Scheduling ~~~ //
 
@@ -89,8 +99,9 @@ function getNow() {
 function schedule() {
 	var now = getNow();
 	var out = 'scheduling at ' + now + '<br />';
-	out += player.processEvents(now, scheduleAheadTime);
+	player.processEvents(now, scheduleAheadTime);
 	info.innerHTML = out;
+	console.log(out);
 }
 
 function play() {
@@ -106,3 +117,6 @@ function stop() {
 
 document.getElementById('play').addEventListener('click', play);
 document.getElementById('stop').addEventListener('click', stop);
+
+// TMP
+play();
