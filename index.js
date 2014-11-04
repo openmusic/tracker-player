@@ -259,13 +259,18 @@ module.exports = function() {
 					
 					var patternTrackLine = pattern.get(line.row, trackIndex);
 
-					line.columns.forEach(function(column, columnIndex) {
+					// Being liberal in what we accept
+					var lineColumns = line.columns !== undefined ? line.columns : [];
+					var lineEffects = line.effects !== undefined ? line.effects : [];
+
+
+					lineColumns.forEach(function(column, columnIndex) {
 
 						patternTrackLine.cells[columnIndex].setData(column);
 					
 					});
 
-					line.effects.forEach(function(column, columnIndex) {
+					lineEffects.forEach(function(column, columnIndex) {
 
 						patternTrackLine.effects.push(column);
 
@@ -277,10 +282,10 @@ module.exports = function() {
 			that.patterns.push(pattern);
 		});
 
-		/*that.patterns.forEach(function(pat, idx) {
+		that.patterns.forEach(function(pat, idx) {
 			console.log('Pattern #', idx);
 			console.log(pat.toString());
-		});*/
+		});
 
 	};
 
