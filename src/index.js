@@ -283,8 +283,7 @@ module.exports = function() {
 		});
 
 		that.patterns.forEach(function(pat, idx) {
-			console.log('Pattern #', idx);
-			console.log(pat.toString());
+			console.log('Pattern # ' + idx + "\n" + pat.toString());
 		});
 
 	};
