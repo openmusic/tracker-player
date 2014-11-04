@@ -113,109 +113,6 @@ module.exports = function() {
 	}
 
 
-	var frameLength = 1000 / 60.0; // TODO move up (?)
-
-	function requestAuditionFrame(callback) {
-
-		var timeout = setTimeout(callback, frameLength);
-		return timeout;
-
-	}
-
-
-	function updateFrame(t /*, frameLength */) {
-		
-		clearTimeout(frameUpdateId);
-
-		// var now = t !== undefined ? t : Date.now(), // TODO maybe use ctx.currTime
-		var now = that.timePosition,
-			frameLengthSeconds = frameLength * 0.001,
-			frameEnd = now + frameLengthSeconds, // frameLength is in ms
-			segmentStart = now,
-			currentEvent,
-			currentEventStart;
-
-		if( that.finished && that.repeat ) {
-			that.jumpToOrder( 0, 0 );
-			that.finished = false;
-		}
-
-		if( that.nextEventPosition === that.eventsList.length ) {
-			return;
-		}
-
-		do {
-
-			currentEvent = that.eventsList[ that.nextEventPosition ];
-			currentEventStart = loopStart + currentEvent.timestamp;
-
-			if(currentEventStart > frameEnd) {
-				break;
-			}
-
-			// Not scheduling things we left behind
-			// TODO probably think about this
-			// an idea: creating ghost silent nodes to play something and
-			// listen to their ended event to trigger ours
-			if(currentEventStart >= now) {
-				var timeUntilEvent = currentEventStart - now;
-				
-				if(currentEvent.type === EVENT_ORDER_CHANGE) {
-
-					changeToOrder( currentEvent.order );
-
-				} else if( currentEvent.type === EVENT_ROW_CHANGE ) {
-
-					changeToRow( currentEvent.row );
-
-				} else if( currentEvent.type === EVENT_NOTE_ON ) {
-
-					// note on -> gear -> schedule note on
-					var voice = that.gear[currentEvent.instrument];
-					if(voice) {
-						setLastPlayedNote(currentEvent.noteNumber, currentEvent.track, currentEvent.column);
-						setLastPlayedInstrument(currentEvent.instrument, currentEvent.track, currentEvent.column);
-						voice.noteOn(currentEvent.noteNumber, currentEvent.volume, timeUntilEvent);
-					} else {
-						console.log("Attempting to call undefined voice", currentEvent.instrument, currentEvent);
-					}
-
-				} else if( currentEvent.type === EVENT_NOTE_OFF ) {
-
-					var voiceIndex = getLastPlayedInstrument(currentEvent.track, currentEvent.column);
-					if(voiceIndex) {
-						var lastVoice = that.gear[voiceIndex];
-						var lastNote = getLastPlayedNote(currentEvent.track, currentEvent.column);
-						lastVoice.noteOff(lastNote, timeUntilEvent);
-					}
-
-				} else if( currentEvent.type === EVENT_VOLUME_CHANGE ) {
-
-					var instrumentIndex = currentEvent.instrument;
-					var volume = currentEvent.volume;
-					var noteNumber = currentEvent.noteNumber;
-					
-					if(instrumentIndex) {
-						var instrument = that.gear[instrumentIndex];
-						instrument.setVolume(noteNumber, volume, timeUntilEvent);
-					}
-
-				}
-			}
-
-			that.nextEventPosition++;
-
-		} while ( that.nextEventPosition < that.eventsList.length );
-
-		that.timePosition += frameLengthSeconds;
-
-		// schedule next
-		if(!that.finished) {
-			frameUpdateId = requestAuditionFrame(updateFrame);
-		}
-
-	}
-
 	// This "unpacks" the song data, which only specifies non null values
 	this.loadSong = function(data) {
 
@@ -476,95 +373,63 @@ module.exports = function() {
 			// Not scheduling things we left behind
 			if(evTime >= relTime) {
 				if(ev.type === EVENT_ORDER_CHANGE) {
+
 					console.log('change to order', ev.order);
 					changeToOrder(ev.order);
+
 				} else if(ev.type === EVENT_ROW_CHANGE) {
+
 					console.log('change to row ', ev.row);
 					changeToRow(ev.row);
-				}
-			}
 
-			this.nextEventPosition++;
+				} else if(ev.type === EVENT_NOTE_ON ) {
 
-		} while(this.nextEventPosition < this.eventsList.length);
-
-	};
-
-	// what used to be updateFrame, but not as-internal
-	this.processEvents2 = function(time, sliceLength) {
-		var out = 'process ' + time + ' ' + sliceLength + '\n';
-		var currentEvent,
-			currentEventStart,
-			absTime = time - loopStart,
-			frameEnd = time + sliceLength;
-
-		out += 'absTime ' + absTime + '\n';
-	
-		if(this.finished && this.repeat) {
-			console.error('hay que resetear');
-			this.jumpToOrder(0, 0);
-			this.finished = false;
-			console.error('ahora', this.nextEventPosition);
-		}
-
-		if(this.nextEventPosition >= this.eventsList.length) {
-			this.finished = true;
-			console.error('FINISHED');
-			return out;
-		}
-
-		do {
-
-			currentEvent = this.eventsList[this.nextEventPosition];
-			//currentEventStart = loopStart + currentEvent.timestamp;
-			currentEventStart = currentEvent.timestamp;
-
-			if(currentEventStart > frameEnd) {
-				break;
-			}
-
-			// Not scheduling things we left behind
-			if(currentEventStart >= absTime) {
-
-				if(currentEvent.type === EVENT_ORDER_CHANGE) {
-					out += 'change to order ' + currentEvent.order + '\n';
-					changeToOrder(currentEvent.order);
-				} else if(currentEvent.type === EVENT_ROW_CHANGE) {
-					out += 'change to row ' + currentEvent.row + '\n';
-					changeToRow(currentEvent.row);
-				} else if(currentEvent.type === EVENT_NOTE_ON) {
-					out += 'note on' + currentEvent.instrument + ' ' + currentEvent.noteNumber + '\n';
-					var voice = this.gear[currentEvent.instrument];
+					// note on -> gear -> schedule note on
+					var voice = this.gear[ev.instrument];
 					if(voice) {
-						setLastPlayedNote(currentEvent.noteNumber, currentEvent.track, currentEvent.column);
-						setLastPlayedInstrument(currentEvent.instrument, currentEvent.track, currentEvent.column);
-						voice.noteOn(currentEventStart, currentEvent.noteNumber, currentEvent.volume);
+						setLastPlayedNote(ev.noteNumber, ev.track, ev.column);
+						setLastPlayedInstrument(ev.instrument, ev.track, ev.column);
+						voice.noteOn(absTime, ev.noteNumber, ev.volume);
+					} else {
+						console.log("Attempting to call undefined voice", ev.instrument, ev);
 					}
+					
+				} else if(ev.type === EVENT_NOTE_OFF) {
+
+					var voiceIndex = getLastPlayedInstrument(ev.track, ev.column);
+					if(voiceIndex) {
+						var lastVoice = this.gear[voiceIndex];
+						var lastNote = getLastPlayedNote(ev.track, ev.column);
+						lastVoice.noteOff(absTime, lastNote);
+					}
+
+				} else if(ev.type === EVENT_VOLUME_CHANGE) {
+					
+					// TODO this is perhaps not the best idea
+					var instrumentIndex = ev.instrument;
+					var volume = ev.volume;
+					var noteNumber = ev.noteNumber;
+					
+					if(instrumentIndex) {
+						var instrument = this.gear[instrumentIndex];
+						instrument.setVolume(absTime, noteNumber, volume);
+					}
+
 				}
 
 			}
 
 			this.nextEventPosition++;
 
-
 		} while(this.nextEventPosition < this.eventsList.length);
-		
 
-		return out;
 	};
 
+	
 	this.play = function(_startTime) {
 		_isPlaying = true;
 		loopStart = _startTime;
 	};
-
-	/*this.play = function() {
-
-		_isPlaying = true;
-
-		updateFrame();
-		
-	};*/
 
 	this.stop = function() {
 		loopStart = 0;
