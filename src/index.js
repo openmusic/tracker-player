@@ -442,13 +442,71 @@ module.exports = function() {
 
 	};
 
-	this.play = function() {
+	// what used to be updateFrame, but not as-internal
+	this.processEvents = function(time, sliceLength) {
+		var out = 'process ' + time + ' ' + sliceLength;
+
+		/* MISSING? */
+		var currentEvent,
+			currentEventStart,
+			frameEnd = time + sliceLength;
+
+		if(this.finished && this.repeat) {
+			this.jumpToOrder(0, 0);
+			this.finished = false;
+		}
+
+		if(this.nextEventPosition === this.eventsList.length) {
+			return out;
+		}
+
+		do {
+			currentEvent = this.eventsList[this.nextEventPosition];
+			currentEventStart = loopStart + currentEvent.timestamp;
+
+			if(currentEventStart > frameEnd) {
+				break;
+			}
+
+			// Not scheduling things we left behind
+			if(currentEventStart >= time) {
+
+				if(currentEvent.type === EVENT_ORDER_CHANGE) {
+					changeToOrder(currentEvent.order);
+				} else if(currentEvent.type === EVENT_ROW_CHANGE) {
+					changeToRow(currentEvent.row);
+				} else if(currentEvent.type === EVENT_NOTE_ON) {
+					var voice = this.gear[currentEvent.instrument];
+					if(voice) {
+						setLastPlayedNote(currentEvent.noteNumber, currentEvent.track, currentEvent.column);
+						setLastPlayedInstrument(currentEvent.instrument, currentEvent.track, currentEvent.column);
+						voice.noteOn(currentEventStart, currentEvent.noteNumber, currentEvent.volume);
+					}
+				}
+
+			}
+
+			this.nextEventPosition++;
+
+
+		} while(this.nextEventPosition < this.eventsList.length);
+		
+
+		return out;
+	};
+
+	this.play = function(_startTime) {
+		_isPlaying = true;
+		loopStart = _startTime;
+	};
+
+	/*this.play = function() {
 
 		_isPlaying = true;
 
 		updateFrame();
 		
-	};
+	};*/
 
 	this.stop = function() {
 		loopStart = 0;

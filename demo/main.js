@@ -78,7 +78,7 @@ player.gear = [ new Trumpet(), new Sax() ];
 var ac = new AudioContext();
 var scheduleAheadTime = 0.1;
 var scheduleInterval = 0.025;
-var scheduleStart = getNow();
+var scheduleStart;
 var scheduleTimer;
 var info = document.getElementById('info');
 
@@ -88,11 +88,15 @@ function getNow() {
 
 function schedule() {
 	var now = getNow();
-	info.innerHTML = 'scheduling at ' + now;
+	var out = 'scheduling at ' + now + '<br />';
+	out += player.processEvents(now, scheduleAheadTime);
+	info.innerHTML = out;
 }
 
 function play() {
+	scheduleStart = getNow();
 	// setInterval works in ms
+	player.play(scheduleStart); // play/pause/resume/stop|reset ?
 	scheduleTimer = setInterval(schedule, scheduleInterval * 1000);
 }
 
