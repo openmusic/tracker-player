@@ -103,8 +103,8 @@ module.exports = function() {
 	}
 
 
-	function setLastPlayedInstrument(note, track, column) {
-		that.tracksLastPlayedInstruments[track][column] = note;
+	function setLastPlayedInstrument(instrument, track, column) {
+		that.tracksLastPlayedInstruments[track][column] = instrument;
 	}
 
 
@@ -293,7 +293,6 @@ module.exports = function() {
 							addEvent( EVENT_NOTE_OFF, { timestamp: timestamp, instrument: cell.instrument, order: orderIndex, pattern: patternIndex, row: i, track: j, column: columnIndex } );
 							setLastPlayedNote(null, j, columnIndex);
 							setLastPlayedInstrument(null, j, columnIndex);
-
 						} else {
 							if(hasArpeggio) {
 
@@ -309,11 +308,13 @@ module.exports = function() {
 
 							} else {
 								if(cell.noteNumber) {
+
 									addEvent( EVENT_NOTE_ON, { timestamp: timestamp, note: cell.note, noteNumber: cell.noteNumber, instrument: cell.instrument, volume: cell.volume, order: orderIndex, pattern: patternIndex, row: i, track: j, column: columnIndex } );
 									setLastPlayedNote(cell.noteNumber, j, columnIndex);
 									setLastPlayedInstrument(cell.instrument, j, columnIndex);
 
 								} else if(cell.volume !== null && lastNote !== null) {
+
 									addEvent( EVENT_VOLUME_CHANGE, { timestamp: timestamp, noteNumber: lastNote, instrument: lastInstrument, volume: cell.volume, order: orderIndex, pattern: patternIndex, row: i, track: j, column: columnIndex });
 
 								}
@@ -391,9 +392,8 @@ module.exports = function() {
 					}
 					
 				} else if(ev.type === EVENT_NOTE_OFF) {
-
 					var voiceIndex = getLastPlayedInstrument(ev.track, ev.column);
-					if(voiceIndex) {
+					if(voiceIndex !== null) {
 						var lastVoice = this.gear[voiceIndex];
 						var lastNote = getLastPlayedNote(ev.track, ev.column);
 						lastVoice.noteOff(absTime, lastNote);
@@ -480,4 +480,5 @@ EVENT_ROW_CHANGE = 'row_change';
 EVENT_NOTE_ON = 'note_on';
 EVENT_NOTE_OFF = 'note_off';
 EVENT_VOLUME_CHANGE = 'volume_change';
+
 

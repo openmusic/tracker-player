@@ -1,4 +1,4 @@
-var Player = require('../src/index');
+var Player = require('../');
 
 
 function InstrumentInterface() {
